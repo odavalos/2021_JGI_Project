@@ -249,6 +249,8 @@ def calc_ppq(df):
 
 #if __name__ == '__main__':
 #args = parse_arguments()
+
+########################## Running the program ########################## 
 run_prodigal(args.fna)
 make_diamonddb(args.db)
 run_diamond(input_faa=f'{inputbase}_prodigal.faa', db=f'{db_base}.dmnd', output=f'{inputbase}')
