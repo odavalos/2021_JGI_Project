@@ -178,7 +178,15 @@ matches = hits.groupby(['qseqid', 'database'])['database'].size().reset_index(na
 
 def calc_ppq(df):
     """
-    
+        Function calculates the qPPQ scores from Pfeifer et.al. 2021.
+    1. creates empty lists for inputs
+    2. parses the data
+        - multi_matches: sequences that contain hits for both phages and plasmids
+        - unique_matches: sequences that match up only to phages or plasmids
+    3. loops through the parsed dataframes and calculate the ppq for each. 
+        - calculates ppq for multi_matches first
+        - calculates ppq for multi_matches second
+    4. merges appended sequence_id's and ppq_scores into a dataframe as the output
     """
     sequence_id = []
     ppq_score = []
