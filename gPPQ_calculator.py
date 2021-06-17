@@ -223,6 +223,10 @@ def calc_ppq(df):
     
     # report results as dataframe
     ppq_df = pd.DataFrame({'Sequence_ID':sequence_id, 'PPQ_Score':ppq_score})
+
+    # save dataframe as csv file
+    ppq_df.to_csv(f'{inputbase}_ppqscores.csv',index = False)
+
     return(ppq_df)
 
 
@@ -254,3 +258,4 @@ def calc_ppq(df):
 run_prodigal(args.fna)
 make_diamonddb(args.db)
 run_diamond(input_faa=f'{inputbase}_prodigal.faa', db=f'{db_base}.dmnd', output=f'{inputbase}')
+calc_ppq(matches)
