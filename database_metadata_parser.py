@@ -20,7 +20,7 @@ parser.add_argument('--output_merged', type = str, required = False, help = 'Mer
 
 args = parser.parse_args()
 
-
+########################## Multiple Inputs / Merged Metadata ########################## 
 if args.merged_metadata == True:
 
 	########################## Input_1 ##########################
@@ -148,6 +148,7 @@ if args.merged_metadata == True:
 	merged_metadata.to_csv('mergedDB_metadata.csv',index = False)
 
 
+########################## Single Input ########################## 
 else:
 	# read the fasta file and isolate header lines and separate the strings
 	header_lines = []
