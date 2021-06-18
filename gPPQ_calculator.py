@@ -7,21 +7,8 @@ import subprocess
 import argparse
 import pandas as pd
 
-
-
-
-#def parse_arguments():
-#    parser = argparse.ArgumentParser()
-#    parser.add_argument('--fna', type = argparse.FileType('r'), 
-#        required = True, help = 'Input fasta file or path to the file')
-#    parser.add_argument('--db', type = argparse.FileType('r'), 
-#        required = True, help = 'Database file or path to database')
-#    return vars(parser.parse_args())
-
-
 # creating the parser
 parser = argparse.ArgumentParser()
-
 
 # parser arguments
 parser.add_argument('--fna', type = str, required = True, help = 'Input fasta file or path to the file')
@@ -81,17 +68,11 @@ def run_prodigal(input):
     prod_cmd += f"-a {base}_prodigal.faa " # this is an output # give same name
     prod_cmd += "-p meta"
     
-    # # creating a file containing the command
-    # with open(f"{base}.prod_cmd","w") as file:
-    #     file.write(prod_cmd + "\n")
-    
     # running the command
     p = subprocess.call(prod_cmd, shell = True) # for testing printing the command
     # add subprocess.stderr=PIPE
     # out, err = p.communicate()
     # print(err)
-    # p.wait()
-
 
 
 ########################## Make diamond database ########################## 
@@ -109,13 +90,8 @@ def make_diamonddb(database):
     diamonddb_cmd += f'--in {database} '
     diamonddb_cmd += f'-d {db_base}'
     
-    # # creating a file containing the command
-    # with open(f"{out}.diamonddb_cmd", "w") as file:
-    #     file.write(diamond_cmd + "\n")
-    
     # running the command
     p = subprocess.call(diamonddb_cmd, shell = True) # for testing printing the command
-    # p.wait()
 
 
 ########################## Running diamond ########################## 
@@ -136,17 +112,8 @@ def run_diamond(input_faa, db, output):
     diamond_cmd += "--subject-cover 50 " # reference coverage greater than or equal to 50%
     diamond_cmd += f"-o {output}_dmnd.tsv"
     
-    # # creating a file containing the command
-    # with open(f"{base}.prod_cmd","w") as file:
-    #     file.write(prod_cmd + "\n")
-    
     # running the command
     p = subprocess.call(diamond_cmd, shell = True) # for testing printing the command
-    # p.wait()
-
-
-
-#### Merge these functions below once working
 
 ########################## Calculating PPQ/gPPQ Score ########################## 
 
@@ -198,7 +165,6 @@ def calc_ppq(df):
     multi_matches = df[df.duplicated('qseqid', keep = False)] # duplicates i.e. matches that contain virus and plasmid matches
     
     # uniquely matching sequences i.e. virus or plasmid
-    #unique_matches = df[['qseqid']].drop_duplicates(keep = False) # all unique ids
     unique_matches = test_matches.drop_duplicates(subset = ['qseqid'], keep = False) # all unique ids
     
     ####### calculating ppq for multi matching sequences #######
@@ -230,32 +196,11 @@ def calc_ppq(df):
     return(ppq_df)
 
 
-
-
-#### Calculating gPPQ
-
-
-
-# def main():
-# 	"""
-
-# 	"""
-# 	opt = parser.parse_args()
-
-# 	run_prodigal(args.fna)
-# 	make_diamonddb(args.db)
-# 	run_diamond()
-
-
-
-
-
-
-#if __name__ == '__main__':
-#args = parse_arguments()
-
 ########################## Running the program ########################## 
 run_prodigal(args.fna)
 make_diamonddb(args.db)
 run_diamond(input_faa=f'{inputbase}_prodigal.faa', db=f'{db_base}.dmnd', output=f'{inputbase}')
 calc_ppq(matches)
+
+
+
