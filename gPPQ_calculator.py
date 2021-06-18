@@ -26,28 +26,6 @@ db_base = os.path.basename(f'{args.db}')
 db_base = os.path.splitext(db_base)[0]
 
 
-## Get fastq files
-
-# def get_inputfasta(fasta_path):
-#     """
-#     Returns a list of fasta file paths to use as inputs
-#     """
-#     # create a list of all files from input directory
-#     file_list = os.listdir(fasta_path)
-    
-#     # fetch and combine path and file names
-#     inputfasta_paths = []
-#     for files in file_list:
-#         if files.lower().endswith('.fna'):
-#             inputfasta_paths.append(fasta_path + files)
-#             print("Fasta files -->", fasta_path + files)
-#             #print(fasta_paths)
-#         else:
-#             print("Not a fasta file -->", files)
-        
-#     return(inputfasta_paths)
-        
-
 
 ########################## gene predictions with Prodigal ########################## 
 
