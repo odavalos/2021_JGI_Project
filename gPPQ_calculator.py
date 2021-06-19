@@ -33,7 +33,7 @@ def run_prodigal(input):
     """
     Running gene predictions with Prodigal
     1. Using anonymous mode (-p meta has been depreciated)
-    2. Output as genbank format (might change to fna?)
+    2. Output as genbank format and protein sequences (faa)
     """
     # get filename from path
     base = os.path.basename(f'{input}') # currently have set to zero since the directory contains two files
@@ -42,15 +42,13 @@ def run_prodigal(input):
     # creating the shell script command
     prod_cmd = "prodigal "
     prod_cmd += f"-i {input} " # input is fna 
-    prod_cmd += f"-o {base}_prodigal.gbk " # can it write out to faa?
-    prod_cmd += f"-a {base}_prodigal.faa " # this is an output # give same name
+    prod_cmd += f"-o {base}_prodigal.gbk " 
+    prod_cmd += f"-a {base}_prodigal.faa " # this is an output file used
     prod_cmd += "-p meta"
     
     # running the command
     p = subprocess.call(prod_cmd, shell = True) # for testing printing the command
     # add subprocess.stderr=PIPE
-    # out, err = p.communicate()
-    # print(err)
 
 
 ########################## Make diamond database ########################## 
