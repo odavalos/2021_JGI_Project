@@ -3,9 +3,28 @@
 # std libraries
 import os
 import sys
+import csv
 import subprocess
 import argparse
-import pandas as pd
+from Bio import SeqIO
+
+
+class Genome:
+    def __init__(self):
+        pass
+
+class Gene:
+    def __init__(self):
+        pass
+    
+class Reference:
+    def __init__(self):
+        pass
+
+class Target:
+    def __init__(self):
+        pass
+
 
 # creating the parser
 parser = argparse.ArgumentParser()
@@ -93,90 +112,149 @@ def run_diamond(input_faa, db, output):
 
 ########################## Calculating PPQ/gPPQ Score ########################## 
 
-# create a dataframe with pandas
-diamond_df = pd.read_csv(f'{inputbase}_dmnd.tsv', sep='\t', header = None)
 
-# list of column names
-output_colnames_dmnd = ["qseqid", "sseqid", "pident", "length", "mismatch", "gapopen", "qstart", "qend", "sstart", "send", "evalue", "bitscore"]
-
-# change the dataframe column names
-diamond_df.columns = output_colnames_dmnd
-
-# read in merged meta data csv file
-mergedDB_metadata = pd.read_csv('mergedDB_metadata.csv')
-
-# match hits with meta data
-hits = pd.merge(diamond_df,mergedDB_metadata, left_on = 'sseqid', right_on = 'sequence_header')
-
-
-virus_totaldb = mergedDB_metadata.query('database == "virus"')['database'].count()
-plasmid_totaldb = mergedDB_metadata.query('database == "plasmid"')['database'].count()
-
-print(f"The total virus database is: {virus_totaldb}")
-print(f"The total plasmid database is: {plasmid_totaldb}")
-
-# count all the matches
-matches = hits.groupby(['qseqid', 'database'])['database'].size().reset_index(name='count')
-
-
-def calc_ppq(df):
+def calc_PPQ(virus_hits, plasmid_hits):
     """
-    Function calculates the qPPQ scores from Pfeifer et.al. 2021.
-    1. creates empty lists for inputs
-    2. parses the data
-        - multi_matches: sequences that contain hits for both phages and plasmids
-        - unique_matches: sequences that match up only to phages or plasmids
-    3. loops through the parsed dataframes and calculate the ppq for each. 
-        - calculates ppq for multi_matches first
-        - calculates ppq for multi_matches second
-    4. merges appended sequence_id's and ppq_scores into a dataframe as the output
+    Function calculates the PPQ scores from Pfeifer et.al. 2021.
     """
-    sequence_id = []
-    ppq_score = []
+    try:
+        return (int(virus_hits) / int(totalvirus)) / ((int(virus_hits) / int(totalvirus))+(int(plasmid_hits) / int(totalplasmid)))
+    except ZeroDivisionError:
+        return 0
+
+    
+def calc_gPPQ(viral_hits, plasmid_hits):
+    """
+    Function calculates the gPPQ scores from Pfeifer et.al. 2021.
+    """
+    try:
+        return ((viral_hits) / ((viral_hits) + (plasmid_hits)))
+    except ZeroDivisionError:
+        return 0
+
+def main():
     
     
-    # split the dataframe i.e. between duplicates (sequences that match both virus and plasmid) and non duplicates
+    run_prodigal(args.fna)
+    make_diamonddb(args.db)
+    run_diamond(input_faa=f'{inputbase}_prodigal.faa', db=f'{db_base}.dmnd', output=f'{inputbase}')
     
-    # virus and plasmid matching sequences
-    multi_matches = df[df.duplicated('qseqid', keep = False)] # duplicates i.e. matches that contain virus and plasmid matches
+    ########################## genome object ##########################
+
+    ## collect genome information
+    genomes = {}
+    for header in SeqIO.parse('test_sequence.fna', 'fasta'):
+        genome = Genome()
+        genome.id = header.id.split()[0]
+        genome.len = len(str(header.seq).upper())
+        genome.genes = 0
+        genome.num_genes_ppq = 0 # still need to add this
+        genome.virus_ppq = 0 # still need to add this
+        genome.plasmid_ppq = 0 # still need to add this
+        genome.gppq = None
+        genomes[genome.id] = genome
+#         print(f"Genome id: {genome.id}, Genome length: {genome.len}")
+
+    ########################## genes object ##########################
     
-    # uniquely matching sequences i.e. virus or plasmid
-    unique_matches = test_matches.drop_duplicates(subset = ['qseqid'], keep = False) # all unique ids
+    genes = {}
+
+    for header in SeqIO.parse('test_sequence_prodigal.faa', 'fasta'):
+        gene = Gene()
+        gene.id = header.id.split()[0]
+        gene.genome_id = header.id.rsplit('_',1)[0]
+        gene.len = len(str(header.seq).upper())
+        gene.virus = 0
+        gene.plasmid = 0
+        gene.ppq = None
+        genes[gene.id] = gene
+        genomes[gene.genome_id].genes += 1
+
+
+    ########################## reference ##########################
     
-    ####### calculating ppq for multi matching sequences #######
-    mm_unique = multi_matches[['qseqid']].drop_duplicates()['qseqid'].tolist()
-    for i in mm_unique:
-        sequence_id.append(i)
-        mm_unique_sub = multi_matches[multi_matches['qseqid'] == i]
-        virus_num = int(mm_unique_sub[mm_unique_sub['database'] == 'virus']['count'].values)
-        plasmid_num = int(mm_unique_sub[mm_unique_sub['database'] == 'plasmid']['count'].values)
-        ppq = (virus_num / virus_totaldb) / ((virus_num/virus_totaldb)+(plasmid_num/plasmid_totaldb))
-        ppq_score.append(ppq)
+    reference = {}
+    total_dbtype = []
+    # totalplasmid = []
+    # reader =  csv.reader(open('mergedDB_metadata.csv'))
+    reader = csv.DictReader(open('mergedDB_metadata.csv'))
+    # next(reader) # ignore header column
+    for row in reader:
+
+        ref = Reference()
+        ref.gene_id = row['sequence_header']
+    #     meta.genome_id = row['genome_id']
+        ref.database = row['database']
+        reference[ref.gene_id] = ref
+        total_dbtype.append(row['database'])
+
+    totalvirus = total_dbtype.count('virus')
+    totalplasmid = total_dbtype.count('plasmid')
+    #     print(row)
+    del total_dbtype
+    del reader
+#     gc.collect()
+    print(f'Total virus database count: {totalvirus} \nTotal plasmid database count: {totalplasmid}')
+
+
+    ########################## target ##########################
     
-    ####### calculating ppq for unique matching sequences #######
-    for index, row in unique_matches.iterrows():
-        sequence_id.append(row['qseqid'])
-        if row['database'] == 'virus':
-            ppq = (row['count']/virus_totaldb) / ((row['count']/virus_totaldb)+(0/plasmid_totaldb))
-            ppq_score.append(ppq)
+    dmnd_headers = ["qseqid", "sseqid", "pident", "length", "mismatch", "gapopen", "qstart", "qend", "sstart", "send", "evalue", "bitscore"]
+
+
+    # pythonic way of adding header to a tsv
+    # https://stackoverflow.com/a/50129816
+    with open('test_sequence_dmnd.tsv', newline='') as f_input, open('test_sequence_dmnd_header.csv', 'w', newline='') as f_output:
+        r = csv.reader(f_input, delimiter='\t')
+        w = csv.writer(f_output, delimiter=',') # convert to csv 
+
+        w.writerow(dmnd_headers)
+        w.writerows(r)
+
+
+    targets = {}
+    reader =  csv.DictReader(open('test_sequence_dmnd_header.csv'))
+    for row in reader: 
+        target = Target()
+        target.gene_id = row['qseqid']
+        target.match_id = row['sseqid']
+        target.type = reference[target.match_id].database
+        targets[target.gene_id] = target
+        if target.type == 'virus':
+            genes[target.gene_id].virus += 1
         else:
-            ppq = (0/virus_totaldb) / ((0/virus_totaldb)+(row['count']/plasmid_totaldb))
-            ppq_score.append(ppq)
-    
-    # report results as dataframe
-    ppq_df = pd.DataFrame({'Sequence_ID':sequence_id, 'PPQ_Score':ppq_score})
-
-    # save dataframe as csv file
-    ppq_df.to_csv(f'{inputbase}_ppqscores.csv',index = False)
-
-    return(ppq_df)
+            genes[target.gene_id].plasmid += 1
 
 
-########################## Running the program ########################## 
-run_prodigal(args.fna)
-make_diamonddb(args.db)
-run_diamond(input_faa=f'{inputbase}_prodigal.faa', db=f'{db_base}.dmnd', output=f'{inputbase}')
-calc_ppq(matches)
+    ########################## PPQ/gPPQ ##########################
+
+    for genome_id in genomes.items():
+        print(genomes[genome_id[0]].id, genomes[genome_id[0]].genes)
+        if genomes[genome_id[0]].genes >= 10:
+            g_id = genomes[genome_id[0]].id
+            for gene_id in genes.items():
+                if genes[gene_id[0]].genome_id == g_id:
+                    vhits = genes[gene_id[0]].virus
+                    phits = genes[gene_id[0]].plasmid
+                    ppq = calc_PPQ(virus_hits=vhits,plasmid_hits=phits)
+                    genes[gene_id[0]].ppq = ppq
+                    genomes[genome_id[0]].num_genes_ppq += 1
+                    if genes[gene_id[0]].ppq == 1:
+                        genomes[genome_id[0]].virus_ppq += 1
+                    elif genes[gene_id[0]].ppq == 0:
+                        genomes[genome_id[0]].plasmid_ppq += 1
+                    else:
+                        pass
+                else:
+                    pass
+        else:
+            pass
+
+        v_hit = genomes[genome_id[0]].virus_ppq
+        p_hit = genomes[genome_id[0]].plasmid_ppq
+        gppq = calc_gPPQ(viral_hits = v_hit, plasmid_hits = p_hit)
+        genomes[genome_id[0]].gppq = gppq
+        print(f"gPPQ for {genomes[genome_id[0]].id}: {genomes[genome_id[0]].gppq}")
 
 
 
