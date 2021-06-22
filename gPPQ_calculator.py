@@ -7,6 +7,7 @@ import csv
 import subprocess
 import argparse
 from Bio import SeqIO
+import pandas as pd
 
 
 class Genome:
@@ -67,7 +68,6 @@ def run_prodigal(input):
     
     # running the command
     p = subprocess.call(prod_cmd, shell = True) # for testing printing the command
-    # add subprocess.stderr=PIPE
 
 
 ########################## Make diamond database ########################## 
@@ -143,7 +143,7 @@ def main():
 
     ## collect genome information
     genomes = {}
-    for header in SeqIO.parse('test_sequence.fna', 'fasta'):
+    for header in SeqIO.parse(args.fna, 'fasta'):
         genome = Genome()
         genome.id = header.id.split()[0]
         genome.len = len(str(header.seq).upper())
@@ -159,7 +159,7 @@ def main():
     
     genes = {}
 
-    for header in SeqIO.parse('test_sequence_prodigal.faa', 'fasta'):
+    for header in SeqIO.parse(f'{base}_prodigal.faa', 'fasta'):
         gene = Gene()
         gene.id = header.id.split()[0]
         gene.genome_id = header.id.rsplit('_',1)[0]
@@ -183,7 +183,6 @@ def main():
 
         ref = Reference()
         ref.gene_id = row['sequence_header']
-    #     meta.genome_id = row['genome_id']
         ref.database = row['database']
         reference[ref.gene_id] = ref
         total_dbtype.append(row['database'])
@@ -254,7 +253,20 @@ def main():
         p_hit = genomes[genome_id[0]].plasmid_ppq
         gppq = calc_gPPQ(viral_hits = v_hit, plasmid_hits = p_hit)
         genomes[genome_id[0]].gppq = gppq
-        print(f"gPPQ for {genomes[genome_id[0]].id}: {genomes[genome_id[0]].gppq}")
+        out_df = pd.DataFrame({'genome_id':genomes[genome_id[0]].id,
+                              'number_genes':genomes[genome_id[0]].genes,
+                              'num_genes_w_ppq':genomes[genome_id[0]].num_genes_ppq,
+                              'genome_length':genomes[genome_id[0]].len,
+                              'gPPQ':genomes[genome_id[0]].gppq})
+        return(out_df.head(5))
+#         print(f"Genome ==> {genomes[genome_id[0]].id}: {genomes[genome_id[0]].genes}, 
+#               {genomes[genome_id[0]].num_genes_ppq}, 
+#               {genomes[genome_id[0]].len},
+#               {genomes[genome_id[0]].gppq}")
 
+
+        
+if __name__ == "__main__":
+    main()
 
 
