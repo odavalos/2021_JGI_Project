@@ -56,14 +56,14 @@ def run_prodigal(input):
     2. Output as genbank format and protein sequences (faa)
     """
     # get filename from path
-    base = os.path.basename(f'{input}') # currently have set to zero since the directory contains two files
-    base = os.path.splitext(base)[0] # the output is a tuple that where the first value the name
+#     base = os.path.basename(f'{input}') # currently have set to zero since the directory contains two files
+#     base = os.path.splitext(base)[0] # the output is a tuple that where the first value the name
     
     # creating the shell script command
     prod_cmd = "prodigal "
     prod_cmd += f"-i {input} " # input is fna 
-    prod_cmd += f"-o {base}_prodigal.gbk " 
-    prod_cmd += f"-a {base}_prodigal.faa " # this is an output file used
+    prod_cmd += f"-o {inputbase}_prodigal.gbk " 
+    prod_cmd += f"-a {inputbase}_prodigal.faa " # this is an output file used
     prod_cmd += "-p meta"
     
     # running the command
@@ -113,7 +113,7 @@ def run_diamond(input_faa, db, output):
 ########################## Calculating PPQ/gPPQ Score ########################## 
 
 
-def calc_PPQ(virus_hits, plasmid_hits):
+def calc_PPQ(virus_hits, plasmid_hits, totalvirus, totalplasmid):
     """
     Function calculates the PPQ scores from Pfeifer et.al. 2021.
     """
@@ -159,7 +159,7 @@ def main():
     
     genes = {}
 
-    for header in SeqIO.parse(f'{base}_prodigal.faa', 'fasta'):
+    for header in SeqIO.parse(f'{inputbase}_prodigal.faa', 'fasta'):
         gene = Gene()
         gene.id = header.id.split()[0]
         gene.genome_id = header.id.rsplit('_',1)[0]
@@ -235,7 +235,7 @@ def main():
                 if genes[gene_id[0]].genome_id == g_id:
                     vhits = genes[gene_id[0]].virus
                     phits = genes[gene_id[0]].plasmid
-                    ppq = calc_PPQ(virus_hits=vhits,plasmid_hits=phits)
+                    ppq = calc_PPQ(virus_hits=vhits,plasmid_hits=phits, totalvirus=totalvirus, totalplasmid=totalplasmid)
                     genes[gene_id[0]].ppq = ppq
                     genomes[genome_id[0]].num_genes_ppq += 1
                     if genes[gene_id[0]].ppq == 1:
@@ -253,16 +253,27 @@ def main():
         p_hit = genomes[genome_id[0]].plasmid_ppq
         gppq = calc_gPPQ(viral_hits = v_hit, plasmid_hits = p_hit)
         genomes[genome_id[0]].gppq = gppq
-        out_df = pd.DataFrame({'genome_id':genomes[genome_id[0]].id,
-                              'number_genes':genomes[genome_id[0]].genes,
-                              'num_genes_w_ppq':genomes[genome_id[0]].num_genes_ppq,
-                              'genome_length':genomes[genome_id[0]].len,
-                              'gPPQ':genomes[genome_id[0]].gppq})
-        return(out_df.head(5))
-#         print(f"Genome ==> {genomes[genome_id[0]].id}: {genomes[genome_id[0]].genes}, 
-#               {genomes[genome_id[0]].num_genes_ppq}, 
-#               {genomes[genome_id[0]].len},
-#               {genomes[genome_id[0]].gppq}")
+
+    ### writing gPPQ scores to a csv file ###
+    id_list = []
+    num_genes = []
+    num_ppq_genes = []
+    genome_len = []
+    gPPQ_scores = []
+    for genome_id in genomes.items():
+        id_list.append(genomes[genome_id[0]].id)
+        num_genes.append(genomes[genome_id[0]].genes)
+        num_ppq_genes.append(genomes[genome_id[0]].num_genes_ppq)
+        genome_len.append(genomes[genome_id[0]].len)
+        gPPQ_scores.append(genomes[genome_id[0]].gppq)
+
+    out_df = pd.DataFrame({'genome_id':id_list, 
+                           'number_genes':num_genes,
+                           'num_genes_w_ppq':num_ppq_genes,
+                           'genome_length':genome_len,
+                           'gPPQ':gPPQ_scores})
+    
+    out_df.to_csv(f'{inputbase}_gPPQ_scores.csv', index=False)
 
 
         
