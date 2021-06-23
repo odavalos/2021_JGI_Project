@@ -203,7 +203,7 @@ def main():
 
     # pythonic way of adding header to a tsv
     # https://stackoverflow.com/a/50129816
-    with open('test_sequence_dmnd.tsv', newline='') as f_input, open('test_sequence_dmnd_header.csv', 'w', newline='') as f_output:
+    with open(f'{inputbase}_dmnd.tsv', newline='') as f_input, open(f'{inputbase}_dmnd.csv', 'w', newline='') as f_output:
         r = csv.reader(f_input, delimiter='\t')
         w = csv.writer(f_output, delimiter=',') # convert to csv 
 
@@ -212,7 +212,7 @@ def main():
 
 
     targets = {}
-    reader =  csv.DictReader(open('test_sequence_dmnd_header.csv'))
+    reader =  csv.DictReader(open(f'{inputbase}_dmnd.csv'))
     for row in reader: 
         target = Target()
         target.gene_id = row['qseqid']
@@ -228,7 +228,6 @@ def main():
     ########################## PPQ/gPPQ ##########################
 
     for genome_id in genomes.items():
-        print(genomes[genome_id[0]].id, genomes[genome_id[0]].genes)
         if genomes[genome_id[0]].genes >= 10:
             g_id = genomes[genome_id[0]].id
             for gene_id in genes.items():
