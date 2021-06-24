@@ -3,6 +3,7 @@
 # std libraries
 import os
 import sys
+import time
 import csv
 import subprocess
 import argparse
@@ -101,10 +102,11 @@ def run_diamond(input_faa, db, output):
     diamond_cmd += "blastp "
     diamond_cmd += f"-q {input_faa} " # use output from prodigal as input for diamond
     diamond_cmd += f"-d {db} "
-    diamond_cmd += "-e 0.0000099 " # maximum e-value of 10^-4
+    diamond_cmd += "-e 0.0001 " # maximum e-value of 10^-4
     diamond_cmd += "--id 35 " # minimum identity% coverage greater than or equal to 50%
     diamond_cmd += "--query-cover 50 " # query coverage greater than or equal to 50%
     diamond_cmd += "--subject-cover 50 " # reference coverage greater than or equal to 50%
+    diamond_cmd += "-k 50 " # max number of target seq for align (default = 25)
     diamond_cmd += f"-o {output}_dmnd.tsv"
     
     # running the command
@@ -120,7 +122,7 @@ def calc_PPQ(virus_hits, plasmid_hits, totalvirus, totalplasmid):
     try:
         return (int(virus_hits) / int(totalvirus)) / ((int(virus_hits) / int(totalvirus))+(int(plasmid_hits) / int(totalplasmid)))
     except ZeroDivisionError:
-        return 0
+        return None
 
     
 def calc_gPPQ(viral_hits, plasmid_hits):
@@ -130,11 +132,12 @@ def calc_gPPQ(viral_hits, plasmid_hits):
     try:
         return ((viral_hits) / ((viral_hits) + (plasmid_hits)))
     except ZeroDivisionError:
-        return 0
+        return None
+
 
 def main():
     
-    
+    startTime = time.time()
     run_prodigal(args.fna)
     make_diamonddb(args.db)
     run_diamond(input_faa=f'{inputbase}_prodigal.faa', db=f'{db_base}.dmnd', output=f'{inputbase}')
@@ -273,6 +276,8 @@ def main():
                            'gPPQ':gPPQ_scores})
     
     out_df.to_csv(f'{inputbase}_gPPQ_scores.csv', index=False)
+    runtime = round((time.time() - startTime),2)
+    print(f"Run time: {runtime} seconds")
 
 
         
