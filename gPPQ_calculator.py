@@ -224,8 +224,10 @@ def main():
         targets[target.gene_id] = target
         if target.type == 'virus':
             genes[target.gene_id].virus += 1
-        else:
+        elif target.type == 'plasmid':
             genes[target.gene_id].plasmid += 1
+        else:
+            None
 
 
     ########################## PPQ/gPPQ ##########################
