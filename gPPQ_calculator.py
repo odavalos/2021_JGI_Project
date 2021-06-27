@@ -106,7 +106,7 @@ def run_diamond(input_faa, db, output):
     diamond_cmd += "--id 35 " # minimum identity% coverage greater than or equal to 50%
     diamond_cmd += "--query-cover 50 " # query coverage greater than or equal to 50%
     diamond_cmd += "--subject-cover 50 " # reference coverage greater than or equal to 50%
-    diamond_cmd += "-k 50 " # max number of target seq for align (default = 25)
+    diamond_cmd += "-k 0 " # max number of target seq for align (default = 25)
     diamond_cmd += f"-o {output}_dmnd.tsv"
     
     # running the command
@@ -122,15 +122,15 @@ def calc_PPQ(virus_hits, plasmid_hits, totalvirus, totalplasmid):
     try:
         return (int(virus_hits) / int(totalvirus)) / ((int(virus_hits) / int(totalvirus))+(int(plasmid_hits) / int(totalplasmid)))
     except ZeroDivisionError:
-        return None
+        return 0
 
     
-def calc_gPPQ(viral_hits, plasmid_hits):
+def calc_gPPQ(sum_ppq, num_genes_wppq):
     """
     Function calculates the gPPQ scores from Pfeifer et.al. 2021.
     """
     try:
-        return ((viral_hits) / ((viral_hits) + (plasmid_hits)))
+        return ((sum_ppq) / ((num_genes_wppq)))
     except ZeroDivisionError:
         return None
 
@@ -151,9 +151,8 @@ def main():
         genome.id = header.id.split()[0]
         genome.len = len(str(header.seq).upper())
         genome.genes = 0
-        genome.num_genes_ppq = 0 # still need to add this
-        genome.virus_ppq = 0 # still need to add this
-        genome.plasmid_ppq = 0 # still need to add this
+        genome.num_genes_ppq = 0
+        genome.ppq_sum = 0
         genome.gppq = None
         genomes[genome.id] = genome
 #         print(f"Genome id: {genome.id}, Genome length: {genome.len}")
@@ -242,20 +241,16 @@ def main():
                     ppq = calc_PPQ(virus_hits=vhits,plasmid_hits=phits, totalvirus=totalvirus, totalplasmid=totalplasmid)
                     genes[gene_id[0]].ppq = ppq
                     genomes[genome_id[0]].num_genes_ppq += 1
-                    if genes[gene_id[0]].ppq == 1:
-                        genomes[genome_id[0]].virus_ppq += 1
-                    elif genes[gene_id[0]].ppq == 0:
-                        genomes[genome_id[0]].plasmid_ppq += 1
-                    else:
-                        pass
+                    genomes[genome_id[0]].ppq_sum += ppq
+                    
                 else:
                     pass
         else:
             pass
 
-        v_hit = genomes[genome_id[0]].virus_ppq
-        p_hit = genomes[genome_id[0]].plasmid_ppq
-        gppq = calc_gPPQ(viral_hits = v_hit, plasmid_hits = p_hit)
+        ppq_s = genomes[genome_id[0]].ppq_sum
+        num_ppqgenes = genomes[genome_id[0]].num_genes_ppq
+        gppq = calc_gPPQ(sum_ppq = ppq_s, num_genes_wppq = num_ppqgenes)
         genomes[genome_id[0]].gppq = gppq
 
     ### writing gPPQ scores to a csv file ###
