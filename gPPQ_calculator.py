@@ -56,9 +56,6 @@ def run_prodigal(input):
     1. Using anonymous mode (-p meta has been depreciated)
     2. Output as genbank format and protein sequences (faa)
     """
-    # get filename from path
-#     base = os.path.basename(f'{input}') # currently have set to zero since the directory contains two files
-#     base = os.path.splitext(base)[0] # the output is a tuple that where the first value the name
     
     # creating the shell script command
     prod_cmd = "prodigal "
@@ -103,11 +100,11 @@ def run_diamond(input_faa, db, output):
     diamond_cmd += f"-q {input_faa} " # use output from prodigal as input for diamond
     diamond_cmd += f"-d {db} "
     diamond_cmd += "-e 0.0001 " # maximum e-value of 10^-4
-    diamond_cmd += "--id 35 " # minimum identity% coverage greater than or equal to 50%
+    diamond_cmd += "--id 35 " # minimum identity% coverage greater than or equal to 35%
     diamond_cmd += "--query-cover 50 " # query coverage greater than or equal to 50%
     diamond_cmd += "--subject-cover 50 " # reference coverage greater than or equal to 50%
     diamond_cmd += "-k 0 " # max number of target seq for align (default = 25)
-    diamond_cmd += f"-o {output}_dmnd.tsv"
+    diamond_cmd += f"-o {output}_dmnd_out.tsv"
     
     # running the command
     p = subprocess.call(diamond_cmd, shell = True) # for testing printing the command
@@ -122,7 +119,7 @@ def calc_PPQ(virus_hits, plasmid_hits, totalvirus, totalplasmid):
     try:
         return (int(virus_hits) / int(totalvirus)) / ((int(virus_hits) / int(totalvirus))+(int(plasmid_hits) / int(totalplasmid)))
     except ZeroDivisionError:
-        return 0
+        return None
 
     
 def calc_gPPQ(sum_ppq, num_genes_wppq):
@@ -155,7 +152,6 @@ def main():
         genome.ppq_sum = 0
         genome.gppq = None
         genomes[genome.id] = genome
-#         print(f"Genome id: {genome.id}, Genome length: {genome.len}")
 
     ########################## genes object ##########################
     
@@ -177,12 +173,9 @@ def main():
     
     reference = {}
     total_dbtype = []
-    # totalplasmid = []
-    # reader =  csv.reader(open('mergedDB_metadata.csv'))
-    reader = csv.DictReader(open('mergedDB_metadata.csv'))
-    # next(reader) # ignore header column
+    reader = csv.DictReader(open('mergedDB_metadata.csv')) # add arg here
+    
     for row in reader:
-
         ref = Reference()
         ref.gene_id = row['sequence_header']
         ref.database = row['database']
@@ -191,10 +184,9 @@ def main():
 
     totalvirus = total_dbtype.count('virus')
     totalplasmid = total_dbtype.count('plasmid')
-    #     print(row)
+    
     del total_dbtype
     del reader
-#     gc.collect()
     print(f'Total virus database count: {totalvirus} \nTotal plasmid database count: {totalplasmid}')
 
 
@@ -205,7 +197,7 @@ def main():
 
     # pythonic way of adding header to a tsv
     # https://stackoverflow.com/a/50129816
-    with open(f'{inputbase}_dmnd.tsv', newline='') as f_input, open(f'{inputbase}_dmnd.csv', 'w', newline='') as f_output:
+    with open(f'{inputbase}_dmnd_out.tsv', newline='') as f_input, open(f'{inputbase}_dmnd_out.csv', 'w', newline='') as f_output:
         r = csv.reader(f_input, delimiter='\t')
         w = csv.writer(f_output, delimiter=',') # convert to csv 
 
@@ -214,7 +206,7 @@ def main():
 
 
     targets = {}
-    reader =  csv.DictReader(open(f'{inputbase}_dmnd.csv'))
+    reader =  csv.DictReader(open(f'{inputbase}_dmnd_out.csv'))
     for row in reader: 
         target = Target()
         target.gene_id = row['qseqid']
@@ -234,24 +226,24 @@ def main():
     for genome_id in genomes.items():
         if genomes[genome_id[0]].genes >= 10:
             g_id = genomes[genome_id[0]].id
+            ppq_scores = []
+            
             for gene_id in genes.items():
                 if genes[gene_id[0]].genome_id == g_id:
                     vhits = genes[gene_id[0]].virus
                     phits = genes[gene_id[0]].plasmid
                     ppq = calc_PPQ(virus_hits=vhits,plasmid_hits=phits, totalvirus=totalvirus, totalplasmid=totalplasmid)
                     genes[gene_id[0]].ppq = ppq
-                    genomes[genome_id[0]].num_genes_ppq += 1
-                    genomes[genome_id[0]].ppq_sum += ppq
+                    if ppq is not None:
+                        genomes[genome_id[0]].num_genes_ppq += 1
+                        ppq_scores.append(ppq)
                     
-                else:
-                    pass
-        else:
-            pass
-
-        ppq_s = genomes[genome_id[0]].ppq_sum
-        num_ppqgenes = genomes[genome_id[0]].num_genes_ppq
-        gppq = calc_gPPQ(sum_ppq = ppq_s, num_genes_wppq = num_ppqgenes)
-        genomes[genome_id[0]].gppq = gppq
+            genomes[genome_id[0]].ppq_sum = sum(ppq_scores)
+        if genomes[genome_id[0]].ppq_sum is not None:
+            ppq_s = genomes[genome_id[0]].ppq_sum
+            num_ppqgenes = genomes[genome_id[0]].num_genes_ppq
+            gppq = calc_gPPQ(sum_ppq = ppq_s, num_genes_wppq = num_ppqgenes)
+            genomes[genome_id[0]].gppq = gppq
 
     ### writing gPPQ scores to a csv file ###
     id_list = []
