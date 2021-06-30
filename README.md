@@ -9,7 +9,7 @@ gPPQ_calculator.py is a python script for calculating the [PPQ and gPPQ scores f
 
 The pipeline can be summarized with 4 steps: 
 
-
+![](gppq_pipeline.png)
 
 
 1. Predict open reading frames with Prodigal
