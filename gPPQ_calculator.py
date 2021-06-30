@@ -149,7 +149,7 @@ def main():
         genome.len = len(str(header.seq).upper())
         genome.genes = 0
         genome.num_genes_ppq = 0
-        genome.ppq_sum = 0
+        genome.ppq_sum = None
         genome.gppq = None
         genomes[genome.id] = genome
 
@@ -162,8 +162,8 @@ def main():
         gene.id = header.id.split()[0]
         gene.genome_id = header.id.rsplit('_',1)[0]
         gene.len = len(str(header.seq).upper())
-        gene.virus = 0
-        gene.plasmid = 0
+        gene.virus = set([])
+        gene.plasmid = set([])
         gene.ppq = None
         genes[gene.id] = gene
         genomes[gene.genome_id].genes += 1
@@ -179,6 +179,7 @@ def main():
         ref = Reference()
         ref.gene_id = row['sequence_header']
         ref.database = row['database']
+        ref.genome_id = row['genome_id']
         reference[ref.gene_id] = ref
         total_dbtype.append(row['database'])
 
@@ -210,13 +211,20 @@ def main():
     for row in reader: 
         target = Target()
         target.gene_id = row['qseqid']
+        target.query_genome_id = reference[target.gene_id].genome_id
         target.match_id = row['sseqid']
+        target.match_genome_id = reference[target.match_id].genome_id
         target.type = reference[target.match_id].database
         targets[target.gene_id] = target
-        if target.type == 'virus':
-            genes[target.gene_id].virus += 1
-        elif target.type == 'plasmid':
-            genes[target.gene_id].plasmid += 1
+    
+    ##### Counting hits 
+    for trgt in targets.keys():
+        if targets[trgt].query_genome_id == targets[trgt].match_genome_id:
+            continue
+        if targets[trgt].type == 'virus':
+            genes[targets[trgt].gene_id].virus.add(targets[trgt].match_genome_id)
+        elif targets[trgt].type == 'plasmid':
+            genes[targets[trgt].gene_id].plasmid.add(targets[trgt].match_genome_id)
         else:
             None
 
