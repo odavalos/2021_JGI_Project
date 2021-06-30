@@ -1,10 +1,6 @@
-# 2021 JGI Internship Project
-
-### gPPQ Calculator
+# gPPQ Calculator
 
 gPPQ_calculator.py is a python script for calculating the [PPQ and gPPQ scores from Pfeifer et.al. 2021](https://academic.oup.com/nar/article/49/5/2655/6137301).
-
-
 
 
 The pipeline can be summarized with 4 steps: 
@@ -35,5 +31,30 @@ The pipeline can be summarized with 4 steps:
 **gPPQ:**
 
 <img src="https://render.githubusercontent.com/render/math?math=\large gPPQ = \frac{\sum Phage \, PPQs}{\sum Phage \, PPQs \> %2B \sum Plasmid \, PPQs}">
+
+
+## Getting Started
+
+### Prerequisites
+
+Make sure to have the following dependencies installed:
+- [Prodigal](https://github.com/hyattpd/Prodigal) (v2.6.3)
+- [DIAMOND](https://github.com/bbuchfink/diamond) (v0.9.14)
+- [Pandas](https://pandas.pydata.org) (v1.2.4)
+- [Biopython](https://github.com/biopython/biopython) (v1.78)
+
+## Usage
+
+    python gPPQ_calculator.py --fna input_sequences.fna --db merged_plasmid_virus_db.faa
+
+## TODO
+- Next steps:
+    - Add more arguments
+    - More testing
+
+
+
+## Contact
+
 
 
