@@ -45,7 +45,20 @@ Make sure to have the following dependencies installed:
 
 ## Usage
 
-    python gPPQ_calculator.py --fna input_sequences.fna --db merged_plasmid_virus_db.faa
+    python gPPQ_calculator.py --fna input_sequences.fna --db merged_plasmid_virus_db.faa --threads 4
+
+ 
+Arguments:
+
+    usage: gPPQ_calculator.py [-h] --fna FNA --db DB --threads THREADS
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      --fna FNA             Input fasta file or path to the file
+      --db DB               Database file or path to database
+      --threads THREADS, -t THREADS
+                            Number of CPU threads; used for diamond.
+
 
 ## TODO
 - Next steps:
