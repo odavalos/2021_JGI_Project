@@ -45,11 +45,6 @@ Make sure to have the following dependencies installed:
 
 ## Usage
 
-    python gPPQ_calculator.py --fna input_sequences.fna --db merged_plasmid_virus_db.faa --threads 4
-
- 
-Arguments:
-
     usage: gPPQ_calculator.py [-h] --fna FNA --db DB --threads THREADS
 
     optional arguments:
@@ -59,6 +54,15 @@ Arguments:
       --meta_db META_DB     Database metadata file used for the reference class, please use csv files
       --threads THREADS, -t THREADS
                             Number of CPU threads; used for diamond.
+
+
+ 
+Example:
+
+    python gPPQ_calculator.py --fna input_sequences.fna --db merged_plasmid_virus_db.faa --meta_db mergedDB_metadata.csv --threads 4
+
+
+
 
 
 ## TODO
