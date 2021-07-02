@@ -34,7 +34,8 @@ parser = argparse.ArgumentParser()
 # parser arguments
 parser.add_argument('--fna', type = str, required = True, help = 'Input fasta file or path to the file')
 parser.add_argument('--db', type = str, required = True, help = 'Database file or path to database')
-parser.add_argument('--threads', '-t', type = int, required = True, help = 'Number of CPU threads; used for diamond.')
+parser.add_argument('--meta_db', type = str, required = True, help = 'Database metadata file used for the reference class, please use csv files')
+parser.add_argument('--threads', '-t', type = int, required = True, help = 'Number of CPU threads; used for diamond')
 # parser.add_argument('--diamond_out', type = str, required = True, help = 'Diamond output file name')
 
 args = parser.parse_args()
@@ -175,7 +176,7 @@ def main():
     
     reference = {}
     total_dbtype = []
-    reader = csv.DictReader(open('mergedDB_metadata.csv')) # add arg here
+    reader = csv.DictReader(open(args.meta_db)) # add arg here
     
     for row in reader:
         ref = Reference()
