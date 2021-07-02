@@ -56,6 +56,7 @@ Arguments:
       -h, --help            show this help message and exit
       --fna FNA             Input fasta file or path to the file
       --db DB               Database file or path to database
+      --meta_db META_DB     Database metadata file used for the reference class, please use csv files
       --threads THREADS, -t THREADS
                             Number of CPU threads; used for diamond.
 
