@@ -241,8 +241,8 @@ def main():
             
             for gene_id in genes.items():
                 if genes[gene_id[0]].genome_id == g_id:
-                    vhits = genes[gene_id[0]].virus
-                    phits = genes[gene_id[0]].plasmid
+                    vhits = len(genes[gene_id[0]].virus)
+                    phits = len(genes[gene_id[0]].plasmid)
                     ppq = calc_PPQ(virus_hits=vhits,plasmid_hits=phits, totalvirus=totalvirus, totalplasmid=totalplasmid)
                     genes[gene_id[0]].ppq = ppq
                     if ppq is not None:
