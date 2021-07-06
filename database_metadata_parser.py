@@ -9,14 +9,14 @@ import pandas as pd
 parser = argparse.ArgumentParser()
 
 # parser arguments
-parser.add_argument('--input', type = argparse.FileType('r'), required = True, help = 'Input protein sequence file')
-parser.add_argument('--db_type', type = str, required = True, help = 'Database type name to give new column to label header id\'s')
+parser.add_argument('--input','-1', type = argparse.FileType('r'), required = True, help = 'Input protein sequence file')
+parser.add_argument('--db_type','-db1', type = str, required = True, help = 'Database type name to give new column to label header id\'s')
 parser.add_argument('--merged_metadata', type = bool, default = False, help = 'whether extract metadata from both databases and to merge the files, default=False')
-parser.add_argument('--input_2', type = argparse.FileType('r'), required = False, help = '2nd input sequence to merge the database metadata')
-parser.add_argument('--db_type2', type = str, required = False, help = 'Second database type name to give new column to label header id\'s')
-parser.add_argument('--output', type = str, required = True, help = 'Output file name')
-parser.add_argument('--output_2', type = str, required = False, help = 'Second output file name')
-parser.add_argument('--output_merged', type = str, required = False, help = 'Merged output file name')
+parser.add_argument('--input_2','-2', type = argparse.FileType('r'), required = False, help = '2nd input sequence to merge the database metadata')
+parser.add_argument('--db_type2','-db2', type = str, required = False, help = 'Second database type name to give new column to label header id\'s')
+parser.add_argument('--output','-out1', type = str, required = True, help = 'Output file name')
+parser.add_argument('--output_2','-out2', type = str, required = False, help = 'Second output file name')
+parser.add_argument('--output_merged','-mergedout', type = str, required = False, help = 'Merged output file name')
 
 args = parser.parse_args()
 
