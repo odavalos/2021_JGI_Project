@@ -67,8 +67,8 @@ Example:
 
 ## TODO
 - Next steps:
-    - Add more arguments
-    - More testing
+
+    - [ ] Move to using [Pyrodigal](https://github.com/althonos/pyrodigal) instead of base Prodigal.
 
 
 
