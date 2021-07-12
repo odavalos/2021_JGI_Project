@@ -43,8 +43,6 @@ class Gene:
             self.ppq = None
         else:
             self.ppq = virus_hit_rate / (virus_hit_rate + plasmid_hit_rate)
-            print(self.id, len(self.virus_hits), len(self.plasmid_hits), self.ppq)
-
     
 class Reference:
     def __init__(self):
