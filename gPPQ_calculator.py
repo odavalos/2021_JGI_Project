@@ -33,13 +33,13 @@ class Gene:
         self.virus_hits = set([])
         self.plasmid_hits = set([])
         
-    def calc_ppq(self, totalvirus, totalplasmid):
+    def calc_ppq(self, min_hits, totalvirus, totalplasmid):
         """
         Function calculates the PPQ scores from Pfeifer et.al. 2021.
         """
         virus_hit_rate = 1.0 * len(self.virus_hits) / totalvirus
         plasmid_hit_rate = 1.0 * len(self.plasmid_hits) / totalplasmid
-        if virus_hit_rate + plasmid_hit_rate == 0:
+        if len(self.virus_hits) + len(self.plasmid_hits) < min_hits:
             self.ppq = None
         else:
             self.ppq = virus_hit_rate / (virus_hit_rate + plasmid_hit_rate)
@@ -59,6 +59,9 @@ parser = argparse.ArgumentParser()
 # parser arguments
 parser.add_argument('--fna', type = str, required = True, help = 'Input fasta file or path to the file')
 parser.add_argument('--db', type = str, required = True, help = 'Path to database directory containing: proteins.dmnd,  proteins.faa,  proteins.tsv')
+parser.add_argument('--min_hits', type = int, default = 1, help = 'Minimum number of hits to calculate PPQ')
+parser.add_argument('--max_identity', type = int, default = 100, help = 'Exclude hits with identity exceeding this value')
+
 parser.add_argument('--threads', type = int, default = 1, help = 'Number of CPU threads; used for diamond')
 parser.add_argument('--out', type = str, required = True, help = 'Output directory')
 args = parser.parse_args()
@@ -140,8 +143,8 @@ def parse_diamond(path):
 def main():
     
     startTime = time.time()
-    #run_prodigal(fna=args.fna, out=args.out)
-    #run_diamond(faa=f'{args.out}/proteins.faa', db=f'{args.db}/proteins.dmnd', out=f'{args.out}/diamond.tsv', threads=args.threads)
+    run_prodigal(fna=args.fna, out=args.out)
+    run_diamond(faa=f'{args.out}/proteins.faa', db=f'{args.db}/proteins.dmnd', out=f'{args.out}/diamond.tsv', threads=args.threads)
     
     ########################## genome object ##########################
 
@@ -164,7 +167,6 @@ def main():
         gene.ppq = None
         genes[gene.id] = gene
         genomes[gene.genome_id].genes.append(gene.id)
-
 
     ########################## reference ##########################
     
@@ -191,6 +193,9 @@ def main():
         # skip self hits
         if row['qseqid'].rsplit('_',1)[0] == row['tseqid'].rsplit('_',1)[0]:
             continue
+        # exclude near identical matches
+        elif float(row['pid']) > args.max_identity:
+            continue
         # plasmid hit
         elif reference[row['tseqid']].database == 'plasmid':
             genes[row['qseqid']].plasmid_hits.add(row['tseqid'].rsplit('_',1)[0])
@@ -200,7 +205,7 @@ def main():
     
     ##### Calculate PPQ scores
     for gene_id in genes:
-        genes[gene_id].calc_ppq(totalvirus, totalplasmid)
+        genes[gene_id].calc_ppq(args.min_hits, totalvirus, totalplasmid)
         
     ##### Calculate gPPQ scores
     for genome_id in genomes:
