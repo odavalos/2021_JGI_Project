@@ -61,7 +61,7 @@ parser.add_argument('--fna', type = str, required = True, help = 'Input fasta fi
 parser.add_argument('--db', type = str, required = True, help = 'Path to database directory containing: proteins.dmnd,  proteins.faa,  proteins.tsv')
 parser.add_argument('--min_hits', type = int, default = 1, help = 'Minimum number of hits to calculate PPQ')
 parser.add_argument('--max_identity', type = int, default = 100, help = 'Exclude hits with identity exceeding this value')
-
+parser.add_argument('--extract_seqs', default = False ,action='store_true', help='extracts predicted phage-plasmid (p-p) sequences from input file, default = False')
 parser.add_argument('--threads', type = int, default = 1, help = 'Number of CPU threads; used for diamond')
 parser.add_argument('--out', type = str, required = True, help = 'Output directory')
 args = parser.parse_args()
@@ -95,6 +95,22 @@ def run_prodigal(fna, out):
     # running the command
     p = subprocess.call(prod_cmd, shell = True) # for testing printing the command
 
+    
+########################## Make diamond database ########################## 
+
+def make_diamonddb(database, db_out):
+    """
+    Creating a database for diamond
+    """
+    
+    diamonddb_cmd = 'diamond '
+    diamonddb_cmd += 'makedb '
+    diamonddb_cmd += f'--in {database} '
+    diamonddb_cmd += f'-d {db_out}'
+    
+    # running the command
+    p = subprocess.call(diamonddb_cmd, shell = True)
+   
 ########################## Running diamond ########################## 
 
 def run_diamond(faa, db, out, threads):
@@ -138,13 +154,58 @@ def parse_diamond(path):
             values = line.split()
             yield dict([(names[i], formats[i](values[i])) for i in range(12)])
 
+            
+########################## Extracting P-P ##########################
+
+def extract_pp(gppq_results, out):
+    """
+    Extracting predicted phage-plasmids genome ids from gPPQ score tsv file
+    """
+    df = pd.read_csv(f'{gppq_results}', sep='\t') # read in the gppq scores with pandas
+    df_sub = df.query('gppq >= 0.1 & gppq <= 0.9 & num_genes >= 10') # subset the dataframe to contain only gPPQ values from 0.1 >= gppq <= 0.9
+    pp_ids = list(df_sub['genome_id']) # collect all p-p genome ids as a list
+    
+    # creating a text file with p-p genome ids that will be passed through seqtk for parsing out the p-p genomic sequences from input
+    with open(f'{out}', 'w') as f:
+        for line in pp_ids:
+            f.write(line)
+            f.write('\n')
+
+
+def parse_pp(input_genomes, predicted_ids, output):
+    """
+    Parsing predicted phage-plasmids from input genomes
+    """
+
+    # creating the shell script command
+    seqtk_cmd = 'seqtk '
+    seqtk_cmd += 'subseq '
+    seqtk_cmd += f'{input_genomes} '
+    seqtk_cmd += f'{predicted_ids} > '
+    seqtk_cmd += f'{output}_predicted_pp.fna'
+
+    # running the command
+    p = subprocess.call(seqtk_cmd, shell = True)
+                   
+            
 ########################## Calculating PPQ/gPPQ Score ########################## 
 
 def main():
     
     startTime = time.time()
     run_prodigal(fna=args.fna, out=args.out)
+    make_diamonddb(database = f'{args.db}/proteins.faa', db_out=f'{args.db}/new_proteins.dmnd')
     run_diamond(faa=f'{args.out}/proteins.faa', db=f'{args.db}/proteins.dmnd', out=f'{args.out}/diamond.tsv', threads=args.threads)
+    
+    if args.extract_seqs:
+        print("Extracting Phage-Plasmid sequences")
+        extract_pp(gppq_results = f'{args.out}/results.tsv', out = f'{args.out}/{inputbase}_pred_pp_ids.txt')
+        parse_pp(input_genomes = args.fna, predicted_ids = f'{args.out}/{inputbase}_pred_pp_ids.txt', 
+                 output = f'{args.out}/{inputbase}_predicted_pp_sequences.fna')
+        
+    else:
+        print("Not extracting Phage-Plasmid sequences")
+        pass
     
     ########################## genome object ##########################
 
@@ -223,6 +284,9 @@ def main():
             row['gppq'] = genomes[genome_id].gppq
             row['ppq_scores'] = ",".join(str(_) for _ in genomes[genome_id].ppq_scores)
             f.write('\t'.join(str(row[field]) for field in fields)+'\n')
+            
+    runtime = round((time.time() - startTime),2)
+    print(f"Run time: {runtime} seconds")
         
 if __name__ == "__main__":
     main()
