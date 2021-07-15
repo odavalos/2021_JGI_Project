@@ -43,10 +43,13 @@ Make sure to have the following dependencies installed:
 - [Pandas](https://pandas.pydata.org) (v1.2.4)
 - [Biopython](https://github.com/biopython/biopython) (v1.78)
 - [Seqtk](https://github.com/lh3/seqtk) (v1.3)
+- [Pyrodigal](https://github.com/althonos/pyrodigal) (v0.5.0) 
+    - **Only if using `--pyrodigal` flag**
 
 ## Usage
 
-    usage: gPPQ_calculator.py [-h] --fna FNA --db DB [--min_hits MIN_HITS] [--max_identity MAX_IDENTITY] [--extract_seqs] [--threads THREADS] --out OUT
+    usage: gPPQ_calculator.py [-h] --fna FNA --db DB [--min_hits MIN_HITS] [--max_identity MAX_IDENTITY] [--pyrodigal] [--extract_seqs] [--threads THREADS]
+                              --out OUT
 
     optional arguments:
       -h, --help            show this help message and exit
@@ -55,6 +58,7 @@ Make sure to have the following dependencies installed:
       --min_hits MIN_HITS   Minimum number of hits to calculate PPQ
       --max_identity MAX_IDENTITY
                             Exclude hits with identity exceeding this value
+      --pyrodigal           Gene predictions using Pyrodigal instead of Prodigal
       --extract_seqs        extracts predicted phage-plasmid (p-p) sequences from input file, default = False
       --threads THREADS     Number of CPU threads; used for diamond
       --out OUT             Output directory
@@ -72,7 +76,7 @@ Example:
 ## TODO
 - Next steps:
 
-    - [ ] Move to using [Pyrodigal](https://github.com/althonos/pyrodigal) instead of base Prodigal.
+    - [X] Added argument for using [Pyrodigal](https://github.com/althonos/pyrodigal) instead of base Prodigal.
 
 
 
