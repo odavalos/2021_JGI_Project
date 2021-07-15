@@ -45,15 +45,18 @@ Make sure to have the following dependencies installed:
 
 ## Usage
 
-    usage: gPPQ_calculator.py [-h] --fna FNA --db DB --threads THREADS
+    usage: gPPQ_calculator.py [-h] --fna FNA --db DB [--min_hits MIN_HITS] [--max_identity MAX_IDENTITY] [--extract_seqs] [--threads THREADS] --out OUT
 
     optional arguments:
       -h, --help            show this help message and exit
       --fna FNA             Input fasta file or path to the file
-      --db DB               Database file or path to database
-      --meta_db META_DB     Database metadata file used for the reference class, please use csv files
-      --threads THREADS, -t THREADS
-                            Number of CPU threads; used for diamond.
+      --db DB               Path to database directory containing: proteins.dmnd, proteins.faa, proteins.tsv
+      --min_hits MIN_HITS   Minimum number of hits to calculate PPQ
+      --max_identity MAX_IDENTITY
+                            Exclude hits with identity exceeding this value
+      --extract_seqs        extracts predicted phage-plasmid (p-p) sequences from input file, default = False
+      --threads THREADS     Number of CPU threads; used for diamond
+      --out OUT             Output directory
 
 
  
