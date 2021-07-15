@@ -42,6 +42,7 @@ Make sure to have the following dependencies installed:
 - [DIAMOND](https://github.com/bbuchfink/diamond) (v0.9.14)
 - [Pandas](https://pandas.pydata.org) (v1.2.4)
 - [Biopython](https://github.com/biopython/biopython) (v1.78)
+- [Seqtk](https://github.com/lh3/seqtk) (v1.3)
 
 ## Usage
 
