@@ -61,6 +61,7 @@ parser.add_argument('--fna', type = str, required = True, help = 'Input fasta fi
 parser.add_argument('--db', type = str, required = True, help = 'Path to database directory containing: proteins.dmnd,  proteins.faa,  proteins.tsv')
 parser.add_argument('--min_hits', type = int, default = 1, help = 'Minimum number of hits to calculate PPQ')
 parser.add_argument('--max_identity', type = int, default = 100, help = 'Exclude hits with identity exceeding this value')
+parser.add_argument('--pyrodigal', default = False, action='store_true', help='Gene predictions using Pyrodigal instead of Prodigal')
 parser.add_argument('--extract_seqs', default = False ,action='store_true', help='extracts predicted phage-plasmid (p-p) sequences from input file, default = False')
 parser.add_argument('--threads', type = int, default = 1, help = 'Number of CPU threads; used for diamond')
 parser.add_argument('--out', type = str, required = True, help = 'Output directory')
@@ -95,6 +96,31 @@ def run_prodigal(fna, out):
     # running the command
     p = subprocess.call(prod_cmd, shell = True) # for testing printing the command
 
+    
+########################## gene predictions with Pyrodigal ##########################
+
+def run_pyrodigal(fna, out):
+    """
+    Running gene predictions with Pyrodigal (Python implementation of Prodigal)
+    """
+    import pyrodigal
+    from Bio.Seq import Seq
+    from Bio.SeqRecord import SeqRecord
+
+    record_list = [] # list for storing sequence records for predicted genes
+
+    for record in SeqIO.parse(f"{fna}", 'fasta'):
+        p = pyrodigal.Pyrodigal(meta=True)
+
+        print(f"Translating genes for genome: {record.id}")
+        for i, gene in enumerate(p.find_genes(bytes(record.seq))):
+            print(f"Gene: {record.id}_{i+1}")
+            gene_seq = Seq(gene.translate())
+            gene_seqrecord = SeqRecord(gene_seq, id = f"{record.id}_{i+1} # {gene.begin} # {gene.end} # {i} # ID={record.id[-1]}_{i+1};partial={int(gene.partial_begin)}{int(gene.partial_end)};start_type={gene.start_type};rbs_motif={gene.rbs_motif};rbs_spacer={gene.rbs_spacer};gc_cont={gene.gc_cont}")
+            record_list.append(gene_seqrecord)
+
+
+    SeqIO.write(record_list, f"{out}/proteins.faa", "fasta")
     
 ########################## Make diamond database ########################## 
 
@@ -193,10 +219,19 @@ def parse_pp(input_genomes, predicted_ids, output):
 def main():
     
     startTime = time.time()
-    run_prodigal(fna=args.fna, out=args.out)
+    
+    # Gene Predictions
+    if args.pyrodigal:
+        print("Running standard Pyrodigal")
+        run_pyrodigal(fna=args.fna, out=args.out)
+    else:
+        print("Running standard Prodigal")
+        run_prodigal(fna=args.fna, out=args.out)
+        
     make_diamonddb(database = f'{args.db}/proteins.faa', db_out=f'{args.db}/new_proteins.dmnd')
     run_diamond(faa=f'{args.out}/proteins.faa', db=f'{args.db}/proteins.dmnd', out=f'{args.out}/diamond.tsv', threads=args.threads)
     
+    # Extract Sequences
     if args.extract_seqs:
         print("Extracting Phage-Plasmid sequences")
         extract_pp(gppq_results = f'{args.out}/results.tsv', out = f'{args.out}/{inputbase}_pred_pp_ids.txt')
